@@ -6,8 +6,15 @@ import time
 import threading
 from datetime import datetime, timedelta
 from flask import Flask, render_template, request, jsonify, send_from_directory, redirect, url_for
-from flask_socketio import SocketIO
 from werkzeug.utils import secure_filename
+
+# Try to import SocketIO, but make it optional for Vercel deployment
+try:
+    from flask_socketio import SocketIO
+    SOCKETIO_AVAILABLE = True
+except ImportError:
+    SOCKETIO_AVAILABLE = False
+    SocketIO = None
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -22,9 +29,28 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'pdf-toolkit-secret-key'
 app.config['MAX_CONTENT_LENGTH'] = 500 * 1024 * 1024  # 500 MB max upload size
 
-# Configure Socket.IO
-# Use threading as the async mode instead of eventlet
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+# Configure Socket.IO (optional for Vercel deployment)
+if SOCKETIO_AVAILABLE:
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+else:
+    # Create a mock socketio object for compatibility
+    class MockSocketIO:
+        def emit(self, *args, **kwargs):
+            pass
+        def start_background_task(self, func, *args, **kwargs):
+            # Run the task directly instead of in background
+            return func(*args, **kwargs)
+        def on(self, event):
+            def decorator(func):
+                return func
+            return decorator
+        def run(self, app, *args, **kwargs):
+            app.run(*args, **kwargs)
+        @property
+        def wsgi_app(self):
+            return None
+    
+    socketio = MockSocketIO()
 
 # Configure response headers for all responses
 @app.after_request

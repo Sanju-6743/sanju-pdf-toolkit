@@ -1,8 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 import os
-import pytesseract
 from PIL import Image
-from pdf2image import convert_from_path
 from werkzeug.utils import secure_filename
 import uuid
 import time
@@ -10,6 +8,21 @@ import logging
 from docx import Document
 from PyPDF2 import PdfReader, PdfWriter
 import io
+
+# Optional imports for features that may not be available in serverless environments
+try:
+    import pytesseract
+    PYTESSERACT_AVAILABLE = True
+except ImportError:
+    PYTESSERACT_AVAILABLE = False
+    pytesseract = None
+
+try:
+    from pdf2image import convert_from_path
+    PDF2IMAGE_AVAILABLE = True
+except ImportError:
+    PDF2IMAGE_AVAILABLE = False
+    convert_from_path = None
 
 # Configure logging
 logger = logging.getLogger(__name__)

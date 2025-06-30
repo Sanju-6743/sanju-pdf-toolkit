@@ -6,15 +6,28 @@ import time
 import logging
 import zipfile
 from PyPDF2 import PdfReader, PdfWriter
-from pdf2image import convert_from_path
 from PIL import Image
-import img2pdf
 import docx
 import pandas as pd
 from pptx import Presentation
 import subprocess
 import platform
 import tempfile
+
+# Optional imports for features that may not be available in serverless environments
+try:
+    from pdf2image import convert_from_path
+    PDF2IMAGE_AVAILABLE = True
+except ImportError:
+    PDF2IMAGE_AVAILABLE = False
+    convert_from_path = None
+
+try:
+    import img2pdf
+    IMG2PDF_AVAILABLE = True
+except ImportError:
+    IMG2PDF_AVAILABLE = False
+    img2pdf = None
 
 # Configure logging
 logger = logging.getLogger(__name__)
