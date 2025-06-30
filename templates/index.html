@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Toolkit - All-in-One PDF Tools</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+</head>
+<body>
+    <!-- Audio elements for notifications -->
+    <audio id="success-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="error-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2872/2872-preview.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="notification-sound" preload="auto">
+        <source src="https://assets.mixkit.co/active_storage/sfx/2867/2867-preview.mp3" type="audio/mpeg">
+    </audio>
+    
+    <!-- Background Music -->
+    <audio id="background-music" loop preload="auto">
+        <source src="https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3" type="audio/mpeg">
+    </audio>
+    
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <i class="fas fa-file-pdf"></i>
+                <h1>PDF Toolkit</h1>
+            </div>
+            <div class="header-controls">
+                <div class="connection-status">
+                    <span id="connection-indicator" class="disconnected"></span>
+                    <span id="connection-text">Disconnected</span>
+                </div>
+                <button id="music-toggle" class="music-toggle" title="Toggle Background Music">
+                    <i class="fas fa-music"></i>
+                </button>
+                <button id="theme-toggle" class="theme-toggle" title="Toggle Theme">
+                    <i class="fas fa-moon"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tool Navigation -->
+            <div class="tool-nav">
+                <div class="search-container">
+                    <input type="text" id="tool-search" placeholder="Search tools...">
+                    <i class="fas fa-search"></i>
+                </div>
+                <nav class="category-nav">
+                    <a href="#" class="nav-link active" data-category="all">All Tools</a>
+                    <a href="#" class="nav-link" data-category="merge-split">Merge & Split</a>
+                    <a href="#" class="nav-link" data-category="convert">Convert</a>
+                    <a href="#" class="nav-link" data-category="edit">Edit</a>
+                    <a href="#" class="nav-link" data-category="security">Security</a>
+                    <a href="#" class="nav-link" data-category="extract">Extract</a>
+                </nav>
+            </div>
+
+            <!-- Tool Cards -->
+            <div class="tool-cards">
+                <!-- Merge PDFs -->
+                <div class="tool-card" data-category="merge-split">
+                    <div class="tool-header">
+                        <i class="fas fa-object-group"></i>
+                        <h2>Merge PDFs</h2>
+                    </div>
+                    <p class="tool-description">Combine multiple PDF files into a single document.</p>
+                    <form id="merge-form" class="tool-form ajax-form" action="/merge" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="merge-files" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF files</span>
+                                <span class="drag-text">or drag files here</span>
+                            </label>
+                            <input type="file" id="merge-files" name="files[]" class="file-upload-input" accept=".pdf" multiple required>
+                            <div id="merge-selected-files" class="selected-files">No files selected</div>
+                        </div>
+                        
+                        <!-- File order feature removed as per user request -->
+                        <input type="hidden" id="merge-order" name="order">
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-object-group"></i> Merge PDFs
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="merge-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="merge-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="merge-status">Ready to merge PDFs</span>
+                    </div>
+                    
+                    <!-- Status log container removed as per user request -->
+                    
+                    <div id="merge-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Split PDF -->
+                <div class="tool-card" data-category="merge-split">
+                    <div class="tool-header">
+                        <i class="fas fa-cut"></i>
+                        <h2>Split PDF</h2>
+                    </div>
+                    <p class="tool-description">Split a PDF into multiple files by page ranges or extract specific pages.</p>
+                    <form id="split-form" class="tool-form ajax-form" action="/split" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="split-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="split-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="split-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Split Method:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="split_method" value="all" checked>
+                                    <span>Extract All Pages</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="split_method" value="range">
+                                    <span>Extract Page Range</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="split_method" value="odd_even">
+                                    <span>Extract Odd/Even Pages</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="page-range-group" class="form-group hidden">
+                            <label for="page-range">Page Range:</label>
+                            <input type="text" id="page-range" name="page_range" placeholder="e.g., 1-3,5,7-9">
+                            <small>Separate ranges with commas (e.g., 1-3,5,7-9)</small>
+                        </div>
+                        
+                        <div id="odd-even-group" class="form-group hidden">
+                            <label>Extract:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="odd_even" value="all" checked>
+                                    <span>Both (as separate files)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="odd_even" value="odd">
+                                    <span>Odd Pages Only</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="odd_even" value="even">
+                                    <span>Even Pages Only</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-cut"></i> Split PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="split-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="split-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="split-status">Ready to split PDF</span>
+                    </div>
+                    
+                    <!-- Status log container removed as per user request -->
+                    
+                    <div id="split-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Compress PDF -->
+                <div class="tool-card" data-category="merge-split">
+                    <div class="tool-header">
+                        <i class="fas fa-compress-alt"></i>
+                        <h2>Compress PDF</h2>
+                    </div>
+                    <p class="tool-description">Reduce the file size of your PDF documents.</p>
+                    <form id="compress-form" class="tool-form ajax-form" action="/compress" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="compress-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="compress-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="compress-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Compression Level:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="compression_level" value="low">
+                                    <span>Low (Better Quality)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="compression_level" value="medium" checked>
+                                    <span>Medium (Balanced)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="compression_level" value="high">
+                                    <span>High (Smaller Size)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-compress-alt"></i> Compress PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="compress-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="compress-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="compress-status">Ready to compress PDF</span>
+                    </div>
+                    
+                    <div id="compress-status-log" class="status-log-container hidden">
+                        <div class="status-header">
+                            <div class="status-title">
+                                <i class="fas fa-sync-alt fa-spin"></i>
+                                <h3>Processing Status</h3>
+                            </div>
+                            <div class="status-timer" id="compress-timer">00:00</div>
+                        </div>
+                        <div class="status-cards" id="compress-status-cards"></div>
+                        <div class="status-progress-timeline">
+                            <div class="timeline-track">
+                                <div class="timeline-progress" id="compress-timeline-progress"></div>
+                            </div>
+                            <div class="timeline-markers">
+                                <div class="timeline-marker" data-stage="start">
+                                    <div class="marker-dot active"></div>
+                                    <div class="marker-label">Start</div>
+                                </div>
+                                <div class="timeline-marker" data-stage="processing">
+                                    <div class="marker-dot"></div>
+                                    <div class="marker-label">Processing</div>
+                                </div>
+                                <div class="timeline-marker" data-stage="finalizing">
+                                    <div class="marker-dot"></div>
+                                    <div class="marker-label">Finalizing</div>
+                                </div>
+                                <div class="timeline-marker" data-stage="complete">
+                                    <div class="marker-dot"></div>
+                                    <div class="marker-label">Complete</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="compress-info" class="info-container hidden">
+                        <div class="info-item">
+                            <span class="info-label">Original Size:</span>
+                            <span id="original-size" class="info-value">0 KB</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Compressed Size:</span>
+                            <span id="compressed-size" class="info-value">0 KB</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Reduction:</span>
+                            <span id="size-reduction" class="info-value">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div id="compress-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- PDF to Images -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-image"></i>
+                        <h2>PDF to Images</h2>
+                    </div>
+                    <p class="tool-description">Convert PDF pages to JPG, PNG, or TIFF images.</p>
+                    <form id="pdf-to-img-form" class="tool-form ajax-form" action="/pdf_to_img" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="pdf-to-img-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="pdf-to-img-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="pdf-to-img-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Image Format:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="format" value="jpg" checked>
+                                    <span>JPG</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="format" value="png">
+                                    <span>PNG</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="format" value="tiff">
+                                    <span>TIFF</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="dpi">Image Quality (DPI):</label>
+                            <select id="dpi" name="dpi">
+                                <option value="100">Low (100 DPI)</option>
+                                <option value="200" selected>Medium (200 DPI)</option>
+                                <option value="300">High (300 DPI)</option>
+                                <option value="600">Very High (600 DPI)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-image"></i> Convert to Images
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="pdf-to-img-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="pdf-to-img-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="pdf-to-img-status">Ready to convert PDF to images</span>
+                    </div>
+                    
+                    <div id="pdf-to-img-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Images to PDF -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-images"></i>
+                        <h2>Images to PDF</h2>
+                    </div>
+                    <p class="tool-description">Convert JPG, PNG, or other image formats to PDF.</p>
+                    <form id="img-to-pdf-form" class="tool-form ajax-form" action="/img_to_pdf" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="img-to-pdf-images" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose image files</span>
+                                <span class="drag-text">or drag files here</span>
+                            </label>
+                            <input type="file" id="img-to-pdf-images" name="images[]" class="file-upload-input" accept=".jpg,.jpeg,.png,.gif,.bmp,.tiff,.tif" multiple required>
+                        </div>
+                        
+                        <div id="img-to-pdf-selected-files" class="selected-files">No files selected</div>
+                        
+                        <div id="img-to-pdf-file-order" class="file-order hidden">
+                            <h3>Drag to reorder images:</h3>
+                            <ul id="img-to-pdf-file-order-list" class="file-order-list"></ul>
+                            <input type="hidden" id="img-to-pdf-order" name="order">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-images"></i> Convert to PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="img-to-pdf-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="img-to-pdf-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="img-to-pdf-status">Ready to convert images to PDF</span>
+                    </div>
+                    
+                    <div id="img-to-pdf-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- PDF to Word -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-word"></i>
+                        <h2>PDF to Word</h2>
+                    </div>
+                    <p class="tool-description">Convert PDF documents to editable Word files.</p>
+                    <form id="pdf-to-word-form" class="tool-form ajax-form" action="/pdf_to_word" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="pdf-to-word-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="pdf-to-word-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="pdf-to-word-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-word"></i> Convert to Word
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="pdf-to-word-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="pdf-to-word-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="pdf-to-word-status">Ready to convert PDF to Word</span>
+                    </div>
+                    
+                    <div id="pdf-to-word-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- PDF to Excel -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-excel"></i>
+                        <h2>PDF to Excel</h2>
+                    </div>
+                    <p class="tool-description">Extract tables from PDF to Excel spreadsheets.</p>
+                    <form id="pdf-to-excel-form" class="tool-form ajax-form" action="/pdf_to_excel" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="pdf-to-excel-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="pdf-to-excel-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="pdf-to-excel-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-excel"></i> Convert to Excel
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="pdf-to-excel-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="pdf-to-excel-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="pdf-to-excel-status">Ready to convert PDF to Excel</span>
+                    </div>
+                    
+                    <div id="pdf-to-excel-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- PDF to PowerPoint -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-powerpoint"></i>
+                        <h2>PDF to PowerPoint</h2>
+                    </div>
+                    <p class="tool-description">Convert PDF to PowerPoint presentations.</p>
+                    <form id="pdf-to-ppt-form" class="tool-form ajax-form" action="/pdf_to_ppt" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="pdf-to-ppt-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="pdf-to-ppt-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="pdf-to-ppt-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-powerpoint"></i> Convert to PowerPoint
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="pdf-to-ppt-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="pdf-to-ppt-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="pdf-to-ppt-status">Ready to convert PDF to PowerPoint</span>
+                    </div>
+                    
+                    <div id="pdf-to-ppt-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Word to PDF -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-pdf"></i>
+                        <h2>Word to PDF</h2>
+                    </div>
+                    <p class="tool-description">Convert Word documents to PDF.</p>
+                    <form id="word-to-pdf-form" class="tool-form ajax-form" action="/word_to_pdf" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="word-to-pdf-word" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose Word file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="word-to-pdf-word" name="word" class="file-upload-input" accept=".doc,.docx" required>
+                        </div>
+                        
+                        <div id="word-to-pdf-selected-files" class="selected-files">No file selected</div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-pdf"></i> Convert to PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="word-to-pdf-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="word-to-pdf-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="word-to-pdf-status">Ready to convert Word to PDF</span>
+                    </div>
+                    
+                    <div id="word-to-pdf-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Excel to PDF -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-pdf"></i>
+                        <h2>Excel to PDF</h2>
+                    </div>
+                    <p class="tool-description">Convert Excel spreadsheets to PDF.</p>
+                    <form id="excel-to-pdf-form" class="tool-form ajax-form" action="/excel_to_pdf" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="excel-to-pdf-excel" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose Excel file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="excel-to-pdf-excel" name="excel" class="file-upload-input" accept=".xls,.xlsx" required>
+                        </div>
+                        
+                        <div id="excel-to-pdf-selected-files" class="selected-files">No file selected</div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-pdf"></i> Convert to PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="excel-to-pdf-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="excel-to-pdf-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="excel-to-pdf-status">Ready to convert Excel to PDF</span>
+                    </div>
+                    
+                    <div id="excel-to-pdf-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- PowerPoint to PDF -->
+                <div class="tool-card" data-category="convert">
+                    <div class="tool-header">
+                        <i class="fas fa-file-pdf"></i>
+                        <h2>PowerPoint to PDF</h2>
+                    </div>
+                    <p class="tool-description">Convert PowerPoint presentations to PDF.</p>
+                    <form id="ppt-to-pdf-form" class="tool-form ajax-form" action="/ppt_to_pdf" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="ppt-to-pdf-ppt" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PowerPoint file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="ppt-to-pdf-ppt" name="ppt" class="file-upload-input" accept=".ppt,.pptx" required>
+                        </div>
+                        
+                        <div id="ppt-to-pdf-selected-files" class="selected-files">No file selected</div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-file-pdf"></i> Convert to PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="ppt-to-pdf-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="ppt-to-pdf-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="ppt-to-pdf-status">Ready to convert PowerPoint to PDF</span>
+                    </div>
+                    
+                    <div id="ppt-to-pdf-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Extract Text -->
+                <div class="tool-card" data-category="extract">
+                    <div class="tool-header">
+                        <i class="fas fa-font"></i>
+                        <h2>Extract Text</h2>
+                    </div>
+                    <p class="tool-description">Extract text content from PDF documents.</p>
+                    <form id="extract-text-form" class="tool-form ajax-form" action="/extract_text" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="extract-text-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="extract-text-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="extract-text-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Output Format:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="output_format" value="txt" checked>
+                                    <span>Text File (.txt)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="output_format" value="docx">
+                                    <span>Word Document (.docx)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-font"></i> Extract Text
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="extract-text-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="extract-text-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="extract-text-status">Ready to extract text</span>
+                    </div>
+                    
+                    <div id="extract-text-preview" class="preview-container hidden">
+                        <h3>Text Preview:</h3>
+                        <div id="extract-text-content" class="preview-content"></div>
+                    </div>
+                    
+                    <div id="extract-text-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- OCR (Text Recognition) -->
+                <div class="tool-card" data-category="extract">
+                    <div class="tool-header">
+                        <i class="fas fa-eye"></i>
+                        <h2>OCR (Text Recognition)</h2>
+                    </div>
+                    <p class="tool-description">Extract text from scanned documents and images.</p>
+                    <form id="ocr-form" class="tool-form ajax-form" action="/ocr" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="ocr-file" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF or image</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="ocr-file" name="file" class="file-upload-input" accept=".pdf,.jpg,.jpeg,.png,.tiff,.tif,.bmp" required>
+                            <div id="ocr-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="language">Language:</label>
+                            <select id="language" name="language">
+                                <option value="eng" selected>English</option>
+                                <option value="fra">French</option>
+                                <option value="deu">German</option>
+                                <option value="spa">Spanish</option>
+                                <option value="ita">Italian</option>
+                                <option value="por">Portuguese</option>
+                                <option value="rus">Russian</option>
+                                <option value="chi_sim">Chinese (Simplified)</option>
+                                <option value="chi_tra">Chinese (Traditional)</option>
+                                <option value="jpn">Japanese</option>
+                                <option value="kor">Korean</option>
+                                <option value="ara">Arabic</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Output Format:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="output_format" value="txt" checked>
+                                    <span>Text File (.txt)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="output_format" value="docx">
+                                    <span>Word Document (.docx)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="output_format" value="pdf">
+                                    <span>Searchable PDF</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-eye"></i> Perform OCR
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="ocr-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="ocr-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="ocr-status">Ready to perform OCR</span>
+                    </div>
+                    
+                    <div id="ocr-preview" class="preview-container hidden">
+                        <h3>Text Preview:</h3>
+                        <div id="ocr-content" class="preview-content"></div>
+                    </div>
+                    
+                    <div id="ocr-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Protect PDF -->
+                <div class="tool-card" data-category="security">
+                    <div class="tool-header">
+                        <i class="fas fa-lock"></i>
+                        <h2>Protect PDF</h2>
+                    </div>
+                    <p class="tool-description">Add password protection to PDF files.</p>
+                    <form id="protect-form" class="tool-form ajax-form" action="/protect" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="protect-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="protect-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="protect-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="password">Password:</label>
+                            <div class="password-input-container">
+                                <input type="password" id="password" name="password" required>
+                                <button type="button" class="password-toggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password:</label>
+                            <div class="password-input-container">
+                                <input type="password" id="confirm_password" name="confirm_password" required>
+                                <button type="button" class="password-toggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Permissions:</label>
+                            <div class="checkbox-group">
+                                <label>
+                                    <input type="checkbox" name="allow_print" checked>
+                                    <span>Allow Printing</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="allow_copy" checked>
+                                    <span>Allow Copy/Extract</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" name="allow_modify" checked>
+                                    <span>Allow Modifications</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-lock"></i> Protect PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="protect-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="protect-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="protect-status">Ready to protect PDF</span>
+                    </div>
+                    
+                    <div id="protect-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Unlock PDF -->
+                <div class="tool-card" data-category="security">
+                    <div class="tool-header">
+                        <i class="fas fa-unlock"></i>
+                        <h2>Unlock PDF</h2>
+                    </div>
+                    <p class="tool-description">Remove password protection from PDF files.</p>
+                    <form id="unlock-form" class="tool-form ajax-form" action="/unlock" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="unlock-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="unlock-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="unlock-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="unlock-password">Password:</label>
+                            <div class="password-input-container">
+                                <input type="password" id="unlock-password" name="password" required>
+                                <button type="button" class="password-toggle">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-unlock"></i> Unlock PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="unlock-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="unlock-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="unlock-status">Ready to unlock PDF</span>
+                    </div>
+                    
+                    <div id="unlock-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Rotate PDF -->
+                <div class="tool-card" data-category="edit">
+                    <div class="tool-header">
+                        <i class="fas fa-sync-alt"></i>
+                        <h2>Rotate PDF</h2>
+                    </div>
+                    <p class="tool-description">Rotate PDF pages by 90, 180, or 270 degrees.</p>
+                    <form id="rotate-form" class="tool-form ajax-form" action="/rotate" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="rotate-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="rotate-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="rotate-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Rotation Angle:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="angle" value="90" checked>
+                                    <span>90° Clockwise</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="angle" value="180">
+                                    <span>180° (Upside Down)</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="angle" value="270">
+                                    <span>90° Counterclockwise</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Pages to Rotate:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="pages" value="all" checked>
+                                    <span>All Pages</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="pages" value="custom">
+                                    <span>Custom Range</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="rotate-range-group" class="form-group hidden">
+                            <label for="rotate-range">Page Range:</label>
+                            <input type="text" id="rotate-range" name="rotate_range" placeholder="e.g., 1-3,5,7-9">
+                            <small>Separate ranges with commas (e.g., 1-3,5,7-9)</small>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-sync-alt"></i> Rotate PDF
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="rotate-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="rotate-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="rotate-status">Ready to rotate PDF</span>
+                    </div>
+                    
+                    <div id="rotate-results" class="results-container hidden"></div>
+                </div>
+                
+                <!-- Watermark PDF -->
+                <div class="tool-card" data-category="edit">
+                    <div class="tool-header">
+                        <i class="fas fa-tint"></i>
+                        <h2>Add Watermark</h2>
+                    </div>
+                    <p class="tool-description">Add text or image watermarks to PDF files.</p>
+                    <form id="watermark-form" class="tool-form ajax-form" action="/watermark" method="post" enctype="multipart/form-data">
+                        <div class="file-upload">
+                            <label for="watermark-pdf" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <span>Choose PDF file</span>
+                                <span class="drag-text">or drag file here</span>
+                            </label>
+                            <input type="file" id="watermark-pdf" name="pdf" class="file-upload-input" accept=".pdf" required>
+                            <div id="watermark-selected-files" class="selected-files">No file selected</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Watermark Type:</label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="watermark_type" value="text" checked>
+                                    <span>Text</span>
+                                </label>
+                                <label>
+                                    <input type="radio" name="watermark_type" value="image">
+                                    <span>Image</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div id="text-watermark-group">
+                            <div class="form-group">
+                                <label for="watermark-text">Watermark Text:</label>
+                                <input type="text" id="watermark-text" name="watermark_text" placeholder="e.g., CONFIDENTIAL" value="CONFIDENTIAL">
+                            </div>
+                        </div>
+                        
+                        <div id="image-watermark-group" class="hidden">
+                            <div class="form-group">
+                                <label for="watermark-image">Watermark Image:</label>
+                                <input type="file" id="watermark-image" name="watermark_image" accept=".jpg,.jpeg,.png,.gif">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="opacity">Opacity:</label>
+                            <div class="range-container">
+                                <input type="range" id="opacity" name="opacity" min="10" max="90" value="30">
+                                <span id="opacity-value">30%</span>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="position">Position:</label>
+                            <select id="position" name="position">
+                                <option value="top-left">Top Left</option>
+                                <option value="top-center">Top Center</option>
+                                <option value="top-right">Top Right</option>
+                                <option value="middle-left">Middle Left</option>
+                                <option value="middle-center" selected>Middle Center</option>
+                                <option value="middle-right">Middle Right</option>
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-center">Bottom Center</option>
+                                <option value="bottom-right">Bottom Right</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="submit-button">
+                                <i class="fas fa-tint"></i> Add Watermark
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <div id="watermark-progress-container" class="progress-container hidden">
+                        <div class="progress">
+                            <div id="watermark-progress-bar" class="progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-status">
+                        <span id="watermark-status">Ready to add watermark</span>
+                    </div>
+                    
+                    <div id="watermark-results" class="results-container hidden"></div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2023 PDF Toolkit. All rights reserved.</p>
+                <p>Files are automatically deleted after 15 minutes for privacy.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Notification Container -->
+    <div id="notification-container" class="notification-container"></div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
