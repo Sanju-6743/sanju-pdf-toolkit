@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Toolkit - Deployment Status</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        .status {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .deployment-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .platform {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .platform:hover {
+            transform: translateY(-5px);
+        }
+        .platform h3 {
+            margin-top: 0;
+            color: #fff;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .btn:hover {
+            background: #45a049;
+        }
+        .btn.queued {
+            background: #ff9800;
+        }
+        .features {
+            margin-top: 30px;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .features li:before {
+            content: "✅ ";
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="status">
+            <h1>🚀 PDF Toolkit</h1>
+            <p>Your comprehensive PDF processing tool is ready for deployment!</p>
+        </div>
+
+        <div class="deployment-links">
+            <div class="platform">
+                <h3>Vercel</h3>
+                <p>Status: ⏳ In Queue</p>
+                <a href="https://pdf-toolkit-gwxigdubi-sanju-6743s-projects.vercel.app" class="btn queued">View Status</a>
+            </div>
+
+            <div class="platform">
+                <h3>Railway</h3>
+                <p>One-click deployment</p>
+                <a href="https://railway.app/template/zUcpux" class="btn">Deploy Now</a>
+            </div>
+
+            <div class="platform">
+                <h3>Render</h3>
+                <p>Free tier available</p>
+                <a href="https://render.com/deploy" class="btn">Deploy Now</a>
+            </div>
+
+            <div class="platform">
+                <h3>GitHub Repository</h3>
+                <p>View source code</p>
+                <a href="https://github.com/Sanju-6743/sanju-pdf-toolkit" class="btn">View Code</a>
+            </div>
+        </div>
+
+        <div class="features">
+            <h3>🔧 Available Features</h3>
+            <ul>
+                <li>PDF Merge & Split</li>
+                <li>PDF Compression</li>
+                <li>Document Conversion (Word, PowerPoint)</li>
+                <li>File Upload/Download</li>
+                <li>Responsive Web Interface</li>
+                <li>Real-time Processing</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <p><strong>Deployment Status:</strong> Ready for all platforms</p>
+            <p><strong>Last Updated:</strong> <span id="timestamp"></span></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('timestamp').textContent = new Date().toLocaleString();
+        
+        // Auto-refresh every 30 seconds to check deployment status
+        setTimeout(() => {
+            location.reload();
+        }, 30000);
+    </script>
+</body>
+</html>
