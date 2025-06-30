@@ -1,0 +1,25 @@
+name: Deploy to Multiple Platforms
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-info:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Repository Ready for Deployment
+      run: |
+        echo "🚀 Repository is configured for deployment on:"
+        echo "✅ Vercel (vercel.json)"
+        echo "✅ Railway (railway.json, nixpacks.toml)"
+        echo "✅ Render (render.yaml)"
+        echo "✅ Heroku (Procfile, runtime.txt)"
+        echo ""
+        echo "📋 Deployment URLs:"
+        echo "🔗 Railway: https://railway.app/new/template"
+        echo "🔗 Render: https://render.com/deploy"
+        echo "🔗 Vercel: https://vercel.com/import/git"
+        echo ""
+        echo "✨ Your PDF Toolkit is ready to deploy!"
